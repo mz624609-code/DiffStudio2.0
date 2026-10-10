@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="DiffStudio — a free, browser-based code analyzer and fix studio. Inspect. Understand. Repair. 100% local processing.">
+  <title>DiffStudio — Inspect. Understand. Repair.</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ============ TOP BAR ============ -->
+  <header class="topbar">
+    <div class="brand">
+      <svg class="logo" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+        <rect x="2"  y="3"  width="11" height="3" rx="1.5" fill="#8b7cff"/>
+        <rect x="6"  y="9"  width="13" height="3" rx="1.5" fill="#45d69a"/>
+        <rect x="2"  y="15" width="9"  height="3" rx="1.5" fill="#ff777e"/>
+      </svg>
+      <span class="app-name">DiffStudio</span>
+      <span class="tagline">Inspect. Understand. Repair.</span>
+    </div>
+    <div class="topbar-right">
+      <span class="pill status-pill">
+        <span id="status-dot" class="dot dot-ready" aria-hidden="true"></span>
+        <span id="status-text" role="status" aria-live="polite">Ready</span>
+      </span>
+      <span class="pill" id="nav-lang" title="Current language">—</span>
+      <span class="pill pill-local" title="All analysis runs in your browser. Nothing is uploaded.">● 100% local</span>
+      <button id="btn-wrap" class="btn btn-ghost" aria-pressed="false" title="Toggle word wrap">Wrap: off</button>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- ============ STEP 1 + STEP 2 ============ -->
+    <div class="workspace">
+
+      <!-- LEFT: SOURCE EDITOR -->
+      <section class="panel" aria-label="Original source editor">
+        <header class="panel-head">
+          <span class="step">Step 1</span>
+          <h2 class="panel-title">Original Source</h2>
+          <span class="file-name" id="file-name" title="Current file">untitled</span>
+          <div class="head-tools">
+            <label class="visually-hidden" for="language-select">Language</label>
+            <select id="language-select" class="select" aria-label="Programming language">
+              <option value="auto">Auto Detect</option>
+              <option value="cpp">C++</option>
+              <option value="python">Python</option>
+              <option value="javascript">JavaScript</option>
+              <option value="java">Java</option>
+            </select>
+            <button id="btn-upload" class="btn">Upload</button>
+            <button id="btn-demo" class="btn">Load Demo</button>
+            <button id="btn-clear" class="btn btn-danger-ghost">Clear</button>
+            <input type="file" id="file-input" class="visually-hidden"
+                   accept=".cpp,.cc,.cxx,.h,.hpp,.py,.js,.ts,.java,.txt"
+                   aria-label="Upload a source file">
+          </div>
+        </header>
+
+        <div class="editor-body" id="editor-body">
+          <div class="gutter-wrap" aria-hidden="true">
+            <pre class="gutter-inner" id="editor-gutter"></pre>
+          </div>
+          <div class="code-area">
+            <pre class="hl" id="editor-hl" aria-hidden="true"><code id="editor-hl-code"></code></pre>
+            <textarea id="editor-input" class="edit-layer"
+                      spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"
+                      wrap="off" aria-label="Source code editor"></textarea>
+            <div class="empty-hint" id="editor-empty">
+              <p><strong>No source loaded.</strong></p>
+              <p>Paste code here, click <em>Upload</em>, drag &amp; drop a file,<br>or click <em>Load Demo</em> to try a buggy sample.</p>
+              <p class="dim">Supports .cpp .cc .cxx .py .js .ts .java .txt</p>
+            </div>
+            <div class="drop-overlay" id="drop-overlay">Drop file to load it into DiffStudio</div>
+          </div>
+        </div>
+
+        <footer class="editor-foot">
+          <span class="stat">Ln <b id="stat-lines">0</b></span>
+          <span class="stat">Chars <b id="stat-chars">0</b></span>
+          <span class="stat">Lang <b id="stat-lang">—</b></span>
+          <button id="btn-analyze" class="btn btn-primary">Analyze Code ⚡</button>
+        </footer>
+      </section>
+
+      <!-- RIGHT: ANALYZER -->
+      <section class="panel" aria-label="Live code analyzer">
+        <header class="panel-head">
+          <span class="step">Step 2</span>
+          <h2 class="panel-title">Code Analyzer</h2>
+          <span class="analyzer-status" id="analyzer-status" aria-live="polite">Ready</span>
+        </header>
+
+        <div class="metrics">
+          <div class="metric" id="metric-errors">
+            <span class="metric-num" id="count-errors">0</span>
+            <span class="metric-label">Critical Errors</span>
+          </div>
+          <div class="metric" id="metric-warnings">
+            <span class="metric-num" id="count-warnings">0</span>
+            <span class="metric-label">Warnings / Smells</span>
+          </div>
+          <div class="metric">
+            <span class="metric-num" id="count-lines">0</span>
+            <span class="metric-label">Lines Scanned</span>
+          </div>
+        </div>
+        <p class="disclaimer">Heuristic static analyzer — not a compiler. “No issues” means the implemented rules matched nothing, not that the code is guaranteed valid.</p>
+
+        <h3 class="subhead">Visual Code Inspector <span class="chip" id="diag-summary">No findings</span></h3>
+        <div class="inspector" id="inspector" tabindex="0" aria-label="Annotated source inspector">
+          <p class="inspector-empty">Load or type source code to see the annotated inspector.</p>
+        </div>
+
+        <h3 class="subhead">Diagnostic Log</h3>
+        <ul class="diag-list" id="diagnostics-list">
+          <li class="diag-empty">No diagnostics yet. Paste code or press <em>Analyze Code</em>.</li>
+        </ul>
+      </section>
+    </div>
+
+    <!-- ============ STEP 3: SOLUTION ============ -->
+    <section class="panel panel-solution" aria-label="Modified and fix code solution">
+      <header class="panel-head">
+        <span class="step">Step 3</span>
+        <h2 class="panel-title">Modified &amp; Fix Code Solution</h2>
+        <span class="chip" id="output-mode">Corrected Code</span>
+        <div class="head-tools">
+          <button id="btn-copy" class="btn">Copy Code</button>
+          <button id="btn-export" class="btn">Export File</button>
+          <button id="btn-reset-output" class="btn btn-ghost">Reset to Original</button>
+        </div>
+      </header>
+
+      <div class="tabs" role="tablist" aria-label="Solution modes">
+        <button id="tab-corrected" class="tab active" role="tab" aria-selected="true"  aria-controls="solution-content" data-tab="corrected">Corrected Code</button>
+        <button id="tab-improved"  class="tab"        role="tab" aria-selected="false" aria-controls="solution-content" data-tab="improved"  tabindex="-1">Improved / Modern</button>
+        <button id="tab-custom"    class="tab"        role="tab" aria-selected="false" aria-controls="solution-content" data-tab="custom"    tabindex="-1">Custom Prompt</button>
+      </div>
+
+      <div id="solution-content" role="tabpanel" aria-label="Solution output">
+        <div id="custom-panel" class="custom-panel" hidden>
+          <label class="visually-hidden" for="custom-input">Custom transformation instruction</label>
+          <textarea id="custom-input" rows="2"
+            placeholder='e.g. "convert the for loop to a while loop" · "modernize var declarations" · "replace endl" · "format indentation" · "add error handling" · "explain the code" · "help"'></textarea>
+          <button id="btn-apply-custom" class="btn btn-primary">Apply Transformation</button>
+          <p id="custom-status" class="custom-status" role="status" aria-live="polite"></p>
+        </div>
+
+        <pre class="output-view" id="output-view" tabindex="0" aria-label="Generated output code"><code id="output-code"></code></pre>
+        <h3 class="subhead">Applied Changes &amp; Notes</h3>
+        <ul class="changes" id="changes-list"></ul>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast-region" class="toast-region" aria-live="polite"></div>
+
+  <noscript><p class="noscript">DiffStudio requires JavaScript to run its local analysis engine.</p></noscript>
+
+  <script src="script.js"></script>
+</body>
+</html>
